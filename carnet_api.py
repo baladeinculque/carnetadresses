@@ -18,6 +18,7 @@ class Contact(db.Model):
     nom = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False, unique=True)
     groupe = db.Column(db.String(100), nullable=True)
+    sous_groupe = db.Column(db.String(100), nullable=True)  # ✅ Ajouté
 
     def __repr__(self):
         return f'<Contact {self.nom}>'
@@ -37,7 +38,8 @@ def get_contacts():
         'prenom': c.prenom,
         'nom': c.nom,
         'email': c.email,
-        'groupe': c.groupe
+        'groupe': c.groupe,
+        'sous_groupe': c.sous_groupe  # ✅ Ajouté
     } for c in contacts])
 
 # 2. Ajouter un contact
@@ -48,7 +50,8 @@ def add_contact():
         prenom=data['prenom'],
         nom=data['nom'],
         email=data['email'],
-        groupe=data.get('groupe', '')
+        groupe=data.get('groupe', ''),
+        sous_groupe=data.get('sous_groupe', '')  # ✅ Ajouté
     )
     db.session.add(contact)
     db.session.commit()
@@ -63,6 +66,7 @@ def update_contact(id):
     contact.prenom = data.get('prenom', contact.prenom)
     contact.email = data.get('email', contact.email)
     contact.groupe = data.get('groupe', contact.groupe)
+    contact.sous_groupe = data.get('sous_groupe', contact.sous_groupe)  # ✅ Ajouté
     db.session.commit()
     return jsonify({'message': 'Contact mis à jour'})
 
