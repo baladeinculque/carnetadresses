@@ -4,9 +4,13 @@
   <meta charset="UTF-8">
   <title>Carnet d'adresses</title>
   <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      max-width: 900px;
+      font-family: sans-serif;
+      max-width: 700px;
       margin: auto;
       padding: 2rem;
     }
@@ -15,145 +19,97 @@
       text-align: center;
     }
 
-    .form-section, .filter-section {
-      margin-bottom: 2rem;
-      border: 1px solid #ccc;
-      padding: 1rem;
-      border-radius: 8px;
-    }
-
-    input, select, button {
-      margin: 0.5rem 0;
-      padding: 0.5rem;
+    .form-control {
+      display: block;
       width: 100%;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
     }
 
-    .filters {
+    .row {
       display: flex;
       gap: 1rem;
-      flex-wrap: wrap;
+      margin: 0.5rem 0;
     }
 
-    .filters select {
+    .row > * {
       flex: 1;
-      min-width: 150px;
     }
 
-    .contact-card {
-      position: relative;
-      border: 1px solid #ddd;
+    .contact {
+      border: 1px solid #ccc;
       border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      background-color: #f9f9f9;
+      padding: 0.75rem;
+      margin: 1rem 0;
+      position: relative;
     }
 
-    .contact-actions {
+    .contact-buttons {
       position: absolute;
       top: 8px;
       right: 8px;
     }
 
-    .contact-actions button {
+    .contact-buttons button {
       margin-left: 5px;
     }
   </style>
 </head>
 <body>
+
   <h1>📒 Carnet d'adresses</h1>
 
-  <!-- Ajouter un contact -->
-  <div class="form-section">
+  <div>
     <h2>➕ Ajouter un contact</h2>
-    <input id="prenom" placeholder="Prénom">
-    <input id="nom" placeholder="Nom">
-    <input id="email" placeholder="Email">
-    <select id="groupe" onchange="majSousGroupesFormulaire()">
-      <option value="">Choisir un groupe</option>
-      <option>Equipe pédagogique</option>
-      <option>BUT1</option>
-      <option>BUT2</option>
-      <option>BUT3</option>
-    </select>
-    <select id="sous-groupe">
-      <option value="">Choisir un sous-groupe</option>
-    </select>
-    <button onclick="ajouterContact()">Ajouter</button>
-  </div>
+    <input id="prenom" placeholder="Prénom" class="form-control" />
+    <input id="nom" placeholder="Nom" class="form-control" />
+    <input id="email" placeholder="Email" class="form-control" />
 
-  <!-- Filtres -->
-  <div class="filter-section">
-    <h2>📋 Liste des contacts</h2>
-    <div class="filters">
-      <select id="filtre-groupe" onchange="majSousGroupesFiltres(); chargerContactsFiltrés();">
-        <option value=""><all> Groupe</option>
-        <option>Equipe pédagogique</option>
-        <option>BUT1</option>
-        <option>BUT2</option>
-        <option>BUT3</option>
+    <div class="row">
+      <select id="groupe" class="form-control" onchange="mettreAJourSousGroupes(true)">
+        <option value="">-- Groupe --</option>
+        <option value="Equipe pédagogique">Equipe pédagogique</option>
+        <option value="BUT1">BUT1</option>
+        <option value="BUT2">BUT2</option>
+        <option value="BUT3">BUT3</option>
       </select>
 
-      <select id="filtre-sous-groupe" onchange="chargerContactsFiltrés()">
-        <option value=""><all> Sous-groupe</option>
+      <select id="sous_groupe" class="form-control">
+        <option value="">-- Sous-groupe --</option>
       </select>
     </div>
+
+    <button onclick="ajouterContact()" class="form-control">Ajouter</button>
   </div>
 
-  <!-- Liste des contacts -->
-  <div id="liste-contacts"></div>
+  <div>
+    <h2>📋 Afficher les contacts</h2>
+    <div class="row">
+      <select id="filtreGroupe" class="form-control" onchange="mettreAJourSousGroupes(false); filtrerContacts();">
+        <option value="all">Tous les groupes</option>
+        <option value="Equipe pédagogique">Equipe pédagogique</option>
+        <option value="BUT1">BUT1</option>
+        <option value="BUT2">BUT2</option>
+        <option value="BUT3">BUT3</option>
+      </select>
+
+      <select id="filtreSousGroupe" class="form-control" onchange="filtrerContacts()">
+        <option value="all">Tous les sous-groupes</option>
+      </select>
+    </div>
+
+    <div id="liste-contacts"></div>
+  </div>
 
   <script>
     const API_URL = "https://carnet-api.onrender.com/api/contacts";
 
-    const sousGroupesComplet = {
-      "Equipe pédagogique": ["Enseignants", "Intervenants", "BIATSS"],
-      "BUT1": ["TD1", "TD2", "TP1", "TP2", "TP3", "TP4"],
-      "BUT2": ["TD1", "TD2", "TP1", "TP2", "TP3", "TP4"],
-      "BUT3": ["TD1", "TD2", "TP1", "TP2", "TP3", "TP4"]
-    };
-
-    const sousGroupesFormulaire = {
-      "Equipe pédagogique": ["Enseignants", "Intervenants", "BIATSS"],
-      "BUT1": ["TP1", "TP2", "TP3", "TP4"],
-      "BUT2": ["TP1", "TP2", "TP3", "TP4"],
+    const sousGroupesParGroupe = {
+      "Equipe pédagogique": ["enseignants", "intervenants", "BIATSS"],
+      "BUT1": ["TP1", "TP2"],
+      "BUT2": ["TP3", "TP4"],
       "BUT3": ["TP1", "TP2", "TP3", "TP4"]
     };
-
-    // INIT
-    window.onload = () => {
-      majSousGroupesFiltres();
-      chargerContactsFiltrés();
-    };
-
-    function majSousGroupesFormulaire() {
-      const groupe = document.getElementById("groupe").value;
-      const sous = document.getElementById("sous-groupe");
-      sous.innerHTML = `<option value="">Choisir un sous-groupe</option>`;
-
-      if (sousGroupesFormulaire[groupe]) {
-        sousGroupesFormulaire[groupe].forEach(sg => {
-          const opt = document.createElement("option");
-          opt.value = sg;
-          opt.textContent = sg;
-          sous.appendChild(opt);
-        });
-      }
-    }
-
-    function majSousGroupesFiltres() {
-      const groupe = document.getElementById("filtre-groupe").value;
-      const sous = document.getElementById("filtre-sous-groupe");
-      sous.innerHTML = `<option value=""><all> Sous-groupe</option>`;
-
-      if (sousGroupesComplet[groupe]) {
-        sousGroupesComplet[groupe].forEach(sg => {
-          const opt = document.createElement("option");
-          opt.value = sg;
-          opt.textContent = sg;
-          sous.appendChild(opt);
-        });
-      }
-    }
 
     async function ajouterContact() {
       const contact = {
@@ -161,69 +117,100 @@
         nom: document.getElementById("nom").value,
         email: document.getElementById("email").value,
         groupe: document.getElementById("groupe").value,
-        sous_groupe: document.getElementById("sous-groupe").value
+        sous_groupe: document.getElementById("sous_groupe").value
       };
 
       try {
         const res = await fetch(API_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify(contact)
         });
 
         if (res.ok) {
           alert("✅ Contact ajouté !");
-          chargerContactsFiltrés();
+          chargerContacts();
         } else {
-          alert("❌ Erreur ajout : " + await res.text());
+          const msg = await res.text();
+          alert("❌ Erreur à l'ajout : " + msg);
         }
       } catch (err) {
         alert("❌ Erreur réseau : " + err.message);
       }
     }
 
-    async function chargerContactsFiltrés() {
+    function mettreAJourSousGroupes(estPourCreation) {
+      const selectGroupe = document.getElementById(estPourCreation ? "groupe" : "filtreGroupe");
+      const selectSousGroupe = document.getElementById(estPourCreation ? "sous_groupe" : "filtreSousGroupe");
+
+      const groupe = selectGroupe.value;
+      selectSousGroupe.innerHTML = "";
+
+      const defaultOption = document.createElement("option");
+      defaultOption.value = estPourCreation ? "" : "all";
+      defaultOption.textContent = estPourCreation ? "-- Sous-groupe --" : "Tous les sous-groupes";
+      selectSousGroupe.appendChild(defaultOption);
+
+      const sousGroupes = sousGroupesParGroupe[groupe] || [];
+
+      sousGroupes.forEach(sg => {
+        const opt = document.createElement("option");
+        opt.value = sg;
+        opt.textContent = sg;
+        selectSousGroupe.appendChild(opt);
+      });
+    }
+
+    let tousLesContacts = [];
+
+    async function chargerContacts() {
       try {
         const res = await fetch(API_URL);
-        const contacts = await res.json();
-
-        const filtreG = document.getElementById("filtre-groupe").value;
-        const filtreSG = document.getElementById("filtre-sous-groupe").value;
-
-        const filtrés = contacts.filter(c =>
-          (!filtreG || c.groupe === filtreG) &&
-          (!filtreSG || c.sous_groupe === filtreSG)
-        );
-
-        afficherContacts(filtrés);
+        tousLesContacts = await res.json();
+        filtrerContacts();
       } catch (err) {
-        alert("❌ Chargement échoué : " + err.message);
+        alert("❌ Impossible de charger les contacts : " + err.message);
       }
+    }
+
+    function filtrerContacts() {
+      const groupeFiltre = document.getElementById("filtreGroupe").value;
+      const sousGroupeFiltre = document.getElementById("filtreSousGroupe").value;
+
+      let contactsFiltres = tousLesContacts;
+
+      if (groupeFiltre !== "all") {
+        contactsFiltres = contactsFiltres.filter(c => c.groupe === groupeFiltre);
+      }
+
+      if (sousGroupeFiltre !== "all") {
+        contactsFiltres = contactsFiltres.filter(c => c.sous_groupe === sousGroupeFiltre);
+      }
+
+      afficherContacts(contactsFiltres);
     }
 
     function afficherContacts(contacts) {
       const div = document.getElementById("liste-contacts");
       div.innerHTML = "";
 
-      if (contacts.length === 0) {
-        div.textContent = "Aucun contact trouvé.";
-        return;
-      }
+      contacts.forEach(contact => {
+        const bloc = document.createElement("div");
+        bloc.className = "contact";
 
-      contacts.forEach(c => {
-        const card = document.createElement("div");
-        card.className = "contact-card";
-        card.innerHTML = `
-          <div class="contact-actions">
-            <button onclick="modifierContact(${c.id})">✏️</button>
-            <button onclick="supprimerContact(${c.id})">🗑️</button>
+        bloc.innerHTML = `
+          <div class="contact-buttons">
+            <button onclick="modifierContact(${contact.id})">✏️</button>
+            <button onclick="supprimerContact(${contact.id})">🗑️</button>
           </div>
-          <strong>${c.prenom} ${c.nom}</strong><br>
-          Email : ${c.email}<br>
-          Groupe : ${c.groupe || '-'}<br>
-          Sous-groupe : ${c.sous_groupe || '-'}
+          <strong>${contact.prenom} ${contact.nom}</strong><br>
+          Email : ${contact.email}<br>
+          Groupe : ${contact.groupe} / ${contact.sous_groupe || '-'}
         `;
-        div.appendChild(card);
+
+        div.appendChild(bloc);
       });
     }
 
@@ -231,11 +218,15 @@
       if (!confirm("🗑️ Supprimer ce contact ?")) return;
 
       try {
-        const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+        const res = await fetch(`${API_URL}/${id}`, {
+          method: "DELETE"
+        });
+
         if (res.ok) {
-          chargerContactsFiltrés();
+          alert("✅ Contact supprimé !");
+          chargerContacts();
         } else {
-          alert("❌ Échec suppression");
+          alert("❌ Erreur à la suppression.");
         }
       } catch (err) {
         alert("❌ Erreur réseau : " + err.message);
@@ -243,8 +234,11 @@
     }
 
     function modifierContact(id) {
-      alert("🔧 Fonction de modification à venir !");
+      alert("🛠️ Fonction de modification à implémenter !");
     }
+
+    // Charger les contacts au démarrage
+    window.onload = chargerContacts;
   </script>
 </body>
 </html>
