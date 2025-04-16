@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: carnet-api
+    env: python
+    buildCommand: ""
+    startCommand: python carnet_api.py
+    envVars:
+      - key: FLASK_ENV
+        value: production
