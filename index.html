@@ -132,6 +132,14 @@
         if (res.ok) {
           alert("✅ Contact ajouté !");
           chargerContacts();
+          
+            // Réinitialiser les champs après ajout
+            document.getElementById("prenom").value = "";
+            document.getElementById("nom").value = "";
+            document.getElementById("email").value = "";
+            document.getElementById("groupe").value = "<all>";
+            document.getElementById("sousGroupe").value = "<all>";
+
         } else {
           const msg = await res.text();
           alert("❌ Erreur à l'ajout : " + msg);
