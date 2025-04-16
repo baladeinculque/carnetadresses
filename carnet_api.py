@@ -1,9 +1,11 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from flask_migrate import Migrate
 import os
 
 app = Flask(__name__)
+migrate = Migrate(app, db)
 CORS(app)  # Active CORS pour toutes les routes
 
 # Configuration de la base de données
@@ -16,9 +18,13 @@ class Contact(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     prenom = db.Column(db.String(100), nullable=False)
     nom = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), nullable=False, unique=True)
+    email_etu = db.Column(db.String(100), nullable=False, unique=True)
+    email_perso = db.Column(db.String(100), nullable=False, unique=True)
+    date_naissance = db.Column(db.String(100), nullable=True)
+    tel = db.Column(db.String(20), nullable=True, unique=True)
+    discord_id = db.Column(db.String(100), nullable=True, unique=True)  
     groupe = db.Column(db.String(100), nullable=True)
-    sous_groupe = db.Column(db.String(100), nullable=True)  # ✅ Ajouté
+    sous_groupe = db.Column(db.String(100), nullable=True)
 
     def __repr__(self):
         return f'<Contact {self.nom}>'

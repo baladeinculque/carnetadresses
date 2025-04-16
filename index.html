@@ -24,6 +24,7 @@
       width: 100%;
       padding: 0.5rem;
       margin: 0.5rem 0;
+      /*margin: 0.5rem 0;*/
     }
 
     .row {
@@ -59,28 +60,42 @@
 
   <h1>📒 Carnet d'adresses</h1>
 
-  <div>
+  <div class="form-section">
     <h2>➕ Ajouter un contact</h2>
-    <input id="prenom" placeholder="Prénom" class="form-control" />
-    <input id="nom" placeholder="Nom" class="form-control" />
-    <input id="email" placeholder="Email" class="form-control" />
+    <form id="ajouter-contact-form">
+        <div class="row">
+            <input id="prenom" class="form-control" placeholder="Prénom" required />
+            <input id="nom" class="form-control" placeholder="Nom" required />
+        </div>
+        
+        <input id="email_etu" class="form-control" type="email" placeholder="Email étudiant" required />
+        <input id="email_perso" class="form-control" type="email" placeholder="Email personnel" />
+        <div class="row">
+            <input id="tel" class="form-control" type="tel" placeholder="Numéro de téléphone" />
+            <input id="date_naissance" class="form-control" type="date" placeholder="Date de naissance" />
+        </div>
+        
+        <input id="discord_id" class="form-control" placeholder="Nom d'utilisateur Discord" />
+        
+        <div class="row">
+            <!-- Liste déroulante pour les groupes -->
+            <select id="groupe" class="form-control" onchange="mettreAJourSousGroupes(true)">
+                <option value="<all>"><all></option>
+                <option value="Equipe pédagogique">Equipe pédagogique</option>
+                <option value="BUT1">BUT1</option>
+                <option value="BUT2">BUT2</option>
+                <option value="BUT3">BUT3</option>
+            </select>
 
-    <div class="row">
-      <select id="groupe" class="form-control" onchange="mettreAJourSousGroupes(true)">
-        <option value="">-- Groupe --</option>
-        <option value="Equipe pédagogique">Equipe pédagogique</option>
-        <option value="BUT1">BUT1</option>
-        <option value="BUT2">BUT2</option>
-        <option value="BUT3">BUT3</option>
-      </select>
+            <!-- Liste déroulante pour les sous-groupes (sera mise à jour en fonction du groupe) -->
+            <select id="sous_groupe" class="form-control">
+                <option value="<all>"><all></option>
+            </select>
+        </div>
 
-      <select id="sous_groupe" class="form-control">
-        <option value="">-- Sous-groupe --</option>
-      </select>
-    </div>
-
-    <button onclick="ajouterContact()" class="form-control">Ajouter</button>
-  </div>
+        <button type="button" class="form-control" onclick="ajouterContact()">Ajouter</button>
+    </form>
+</div>
 
   <div>
     <h2>📋 Afficher les contacts</h2>
@@ -115,7 +130,11 @@
       const contact = {
         prenom: document.getElementById("prenom").value,
         nom: document.getElementById("nom").value,
-        email: document.getElementById("email").value,
+        email_etu: document.getElementById("email_etu").value,
+        email_perso: document.getElementById("email_perso").value,
+        date_naissance: document.getElementById("date_naissance").value,
+        tel: document.getElementById("tel").value,
+        discord_id: document.getElementById("discord_id").value,
         groupe: document.getElementById("groupe").value,
         sous_groupe: document.getElementById("sous_groupe").value
       };
@@ -134,11 +153,19 @@
           chargerContacts();
           
             // Réinitialiser les champs après ajout
+            document.getElementById("ajouter-contact-form").reset();
+            mettreAJourSousGroupes(true)
+            /*
             document.getElementById("prenom").value = "";
             document.getElementById("nom").value = "";
-            document.getElementById("email").value = "";
+            document.getElementById("email_etu").value = "";
+            document.getElementById("email_perso").value = "";
+            document.getElementById("date_naissance").value = "";
+            document.getElementById("tel").value = "";
+            document.getElementById("discord_id").value = "";
             document.getElementById("groupe").value = "";
             document.getElementById("sous_groupe").value = "";
+            */
 
         } else {
           const msg = await res.text();
@@ -214,7 +241,8 @@
             <button onclick="supprimerContact(${contact.id})">🗑️</button>
           </div>
           <strong>${contact.prenom} ${contact.nom}</strong><br>
-          Email : ${contact.email}<br>
+          Email étudiant : ${contact.email_etu || "-" } <br> / Email perso : ${contact.email_perso}<br>
+          Téléphone : ${contact.tel} / Discord : ${contact.discord_id}<br>
           Groupe : ${contact.groupe} / ${contact.sous_groupe || '-'}
         `;
 
