@@ -32,7 +32,7 @@ with app.app_context():
 # 1. Récupérer tous les contacts
 @app.route('/api/contacts', methods=['GET'])
 def get_contacts():
-    contacts = Contact.query.all()
+    contacts = Contact.query.order_by(Contact.nom).all()
     return jsonify([{
         'id': c.id,
         'prenom': c.prenom,
