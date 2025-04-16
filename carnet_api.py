@@ -1,42 +1,52 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 import os
 
 app = Flask(__name__)
+CORS(app)  # Active CORS pour toutes les routes
+
+# Configuration de la base de données
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///contacts.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- Modèle de données ---
+# Modèle de données pour les contacts
 class Contact(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    nom = db.Column(db.String(100))
-    prenom = db.Column(db.String(100))
-    email = db.Column(db.String(120), unique=True)
-    groupe = db.Column(db.String(100))
+    prenom = db.Column(db.String(100), nullable=False)
+    nom = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False, unique=True)
+    groupe = db.Column(db.String(100), nullable=True)
 
-# --- Créer la base de données ---
+    def __repr__(self):
+        return f'<Contact {self.nom}>'
+
+# Créer la base de données au démarrage (si elle n'existe pas)
 with app.app_context():
     db.create_all()
 
-# --- Routes API CRUD ---
+# Routes API CRUD
+
+# 1. Récupérer tous les contacts
 @app.route('/api/contacts', methods=['GET'])
 def get_contacts():
     contacts = Contact.query.all()
     return jsonify([{
-    'id': c.id,
-    'nom': c.nom,
-    'prenom': c.prenom,
-    'email': c.email,
-    'groupe': c.groupe
-} for c in contacts])
+        'id': c.id,
+        'prenom': c.prenom,
+        'nom': c.nom,
+        'email': c.email,
+        'groupe': c.groupe
+    } for c in contacts])
 
+# 2. Ajouter un contact
 @app.route('/api/contacts', methods=['POST'])
 def add_contact():
     data = request.json
     contact = Contact(
-        nom=data['nom'],
         prenom=data['prenom'],
+        nom=data['nom'],
         email=data['email'],
         groupe=data.get('groupe', '')
     )
@@ -44,6 +54,7 @@ def add_contact():
     db.session.commit()
     return jsonify({'message': 'Contact ajouté avec succès'}), 201
 
+# 3. Mettre à jour un contact
 @app.route('/api/contacts/<int:id>', methods=['PUT'])
 def update_contact(id):
     contact = Contact.query.get_or_404(id)
@@ -55,6 +66,7 @@ def update_contact(id):
     db.session.commit()
     return jsonify({'message': 'Contact mis à jour'})
 
+# 4. Supprimer un contact
 @app.route('/api/contacts/<int:id>', methods=['DELETE'])
 def delete_contact(id):
     contact = Contact.query.get_or_404(id)

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Carnet d'adresses</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: auto;
+      padding: 2rem;
+    }
+    input, button {
+      display: block;
+      margin: 0.5rem 0;
+      width: 100%;
+      padding: 0.5rem;
+    }
+    .contact {
+      border: 1px solid #ccc;
+      margin: 1rem 0;
+      padding: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>📒 Carnet d'adresses</h1>
+
+  <h2>➕ Ajouter un contact</h2>
+  <input id="prenom" placeholder="Prénom" />
+  <input id="nom" placeholder="Nom" />
+  <input id="email" placeholder="Email" />
+  <input id="groupe" placeholder="Groupe" />
+  <button onclick="ajouterContact()">Ajouter</button>
+
+  <h2>📋 Tous les contacts</h2>
+  <button onclick="chargerContacts()">Afficher les contacts</button>
+  <div id="liste-contacts"></div>
+
+  <script>
+    const API_URL = "https://carnet-api.onrender.com/api/contacts";
+  
+    async function ajouterContact() {
+      const contact = {
+        prenom: document.getElementById("prenom").value,
+        nom: document.getElementById("nom").value,
+        email: document.getElementById("email").value,
+        groupe: document.getElementById("groupe").value,
+      };
+  
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(contact)
+        });
+  
+        if (res.ok) {
+          alert("✅ Contact ajouté !");
+          chargerContacts();
+        } else {
+          const msg = await res.text();
+          alert("❌ Erreur à l'ajout : " + msg);
+        }
+      } catch (err) {
+        alert("❌ Erreur réseau : " + err.message);
+      }
+    }
+  
+    async function chargerContacts() {
+      try {
+        const res = await fetch(API_URL);
+        const contacts = await res.json();
+  
+        const div = document.getElementById("liste-contacts");
+        div.innerHTML = "";
+  
+        contacts.forEach(contact => {
+          const bloc = document.createElement("div");
+          bloc.className = "contact";
+          bloc.innerHTML = `
+            <strong>${contact.prenom} ${contact.nom}</strong><br>
+            Email : ${contact.email}<br>
+            Groupe : ${contact.groupe}<br>
+            <button onclick="supprimerContact(${contact.id})">Supprimer</button>
+          `;
+          div.appendChild(bloc);
+        });
+      } catch (err) {
+        alert("❌ Impossible de charger les contacts : " + err.message);
+      }
+    }
+  
+    async function supprimerContact(id) {
+      const confirmation = confirm("🗑️ Supprimer ce contact ?");
+      if (!confirmation) return;
+  
+      try {
+        const res = await fetch(`${API_URL}/${id}`, {
+          method: "DELETE"
+        });
+  
+        if (res.ok) {
+          alert("✅ Contact supprimé !");
+          chargerContacts();
+        } else {
+          const msg = await res.text();
+          alert("❌ Erreur à la suppression : " + msg);
+        }
+      } catch (err) {
+        alert("❌ Erreur réseau : " + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
