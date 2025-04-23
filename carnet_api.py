@@ -62,16 +62,20 @@ def get_contacts():
 @app.route('/api/contacts', methods=['POST'])
 def add_contact():
     data = request.json
+
+    def normalize(value):
+        return value if value and value.strip() else None
+    
     contact = Contact(
-        prenom=data['prenom'],
-        nom=data['nom'],
-        email_etu=data['email_etu'],
-        email_perso=data['email_perso'],
-        tel=data.get('tel'),
-        discord_id=data.get('discord_id'),
-        date_naissance=data.get('date_naissance'),
-        groupe=data.get('groupe', ''),
-        sous_groupe=data.get('sous_groupe', '')
+        prenom=normalize(data.get('prenom')),
+        nom=normalize(data.get('nom')),
+        email_etu=normalize(data.get('email_etu')),
+        email_perso=normalize(data.get('email_perso')),
+        tel=normalize(data.get('tel')),
+        discord_id=normalize(data.get('discord_id')),
+        date_naissance=normalize(data.get('date_naissance')),
+        groupe=normalize(data.get('groupe')),
+        sous_groupe=normalize(data.get('sous_groupe'))
     )
     try:
         db.session.add(contact)

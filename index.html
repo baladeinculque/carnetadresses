@@ -80,7 +80,7 @@
         <div class="row">
             <!-- Liste déroulante pour les groupes -->
             <select id="groupe" class="form-control" onchange="mettreAJourSousGroupes(true)">
-                <option value="<all>"><all></option>
+                <option value="all">-- Groupe --</option>
                 <option value="Equipe pédagogique">Equipe pédagogique</option>
                 <option value="BUT1">BUT1</option>
                 <option value="BUT2">BUT2</option>
@@ -241,7 +241,8 @@
             <button onclick="supprimerContact(${contact.id})">🗑️</button>
           </div>
           <strong>${contact.prenom} ${contact.nom}</strong><br>
-          Email étudiant : ${contact.email_etu || "-" } <br> / Email perso : ${contact.email_perso}<br>
+          Email étudiant : ${contact.email_etu || "-" }<br>
+          Email perso : ${contact.email_perso}<br>
           Téléphone : ${contact.tel} / Discord : ${contact.discord_id}<br>
           Groupe : ${contact.groupe} / ${contact.sous_groupe || '-'}
         `;
