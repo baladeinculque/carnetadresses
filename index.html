@@ -64,7 +64,7 @@
     <h2>➕ Ajouter un contact</h2>
     <form id="ajouter-contact-form">
         <div class="row">
-            <input id="prenom" class="form-control" placeholder="Prénom" required />
+            <input id="prenom" class="form-control" placeholder="Prénom" required autofocus />
             <input id="nom" class="form-control" placeholder="Nom" required />
         </div>
         
@@ -89,7 +89,7 @@
 
             <!-- Liste déroulante pour les sous-groupes (sera mise à jour en fonction du groupe) -->
             <select id="sous_groupe" class="form-control">
-                <option value="<all>"><all></option>
+                <option value="all"><all></option>
             </select>
         </div>
 
@@ -154,6 +154,7 @@
           
             // Réinitialiser les champs après ajout
             document.getElementById("ajouter-contact-form").reset();
+            document.getElementById("groupe").value = "all";
             mettreAJourSousGroupes(true)
             /*
             document.getElementById("prenom").value = "";
@@ -241,9 +242,9 @@
             <button onclick="supprimerContact(${contact.id})">🗑️</button>
           </div>
           <strong>${contact.prenom} ${contact.nom}</strong><br>
-          Email étudiant : <a href=mailto:"${contact.email_etu}">${contact.email_etu}<\a><br>
-          Email perso : <a href=mailto:"${contact.email_perso}">${contact.email_perso}<\a><br>
-          Téléphone : <a href="tel:${contact.tel}">${contact.tel}<\a> / Discord : ${contact.discord_id}<br>
+          Email étudiant : <a href=mailto:"${contact.email_etu}">${contact.email_etu}</a><br>
+          Email perso : <a href=mailto:"${contact.email_perso}">${contact.email_perso}</a><br>
+          Téléphone : <a href="tel:${contact.tel}">${contact.tel}</a> / Discord : ${contact.discord_id}<br>
           Groupe : ${contact.groupe} / ${contact.sous_groupe || '-'}
         `;
 
@@ -271,7 +272,44 @@
     }
 
     function modifierContact(id) {
-      alert("🛠️ Fonction de modification à implémenter !");
+      const contact = tousLesContacts.find(c => c.id === id);
+      if (!contact) return alert("Contact introuvable");
+
+      const nouveauPrenom = prompt("Prénom :", contact.prenom);
+      const nouveauNom = prompt("Nom :", contact.nom);
+      const nouveauEmail = prompt("Email étudiant :", contact.email_etu);
+
+      if (!nouveauPrenom || !nouveauNom || !nouveauEmail) {
+        alert("✋ Modification annulée.");
+        return;
+      }
+
+      const donneesModifiees = {
+        prenom: nouveauPrenom,
+        nom: nouveauNom,
+        email_etu: nouveauEmail,
+        email_perso: contact.email_perso,
+        tel: contact.tel,
+        discord_id: contact.discord_id,
+        date_naissance: contact.date_naissance,
+        groupe: contact.groupe,
+        sous_groupe: contact.sous_groupe
+      };
+
+      fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(donneesModifiees)
+      })
+        .then(res => {
+          if (res.ok) {
+            alert("✅ Contact modifié !");
+            chargerContacts();
+          } else {
+            res.text().then(txt => alert("❌ Erreur : " + txt));
+          }
+        })
+        .catch(err => alert("❌ Erreur réseau : " + err.message));
     }
 
     // Charger les contacts au démarrage
