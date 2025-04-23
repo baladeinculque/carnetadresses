@@ -116,6 +116,29 @@
     <div id="liste-contacts"></div>
   </div>
 
+  <div id="modale-edition" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#00000099; z-index:1000; justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:1rem; border-radius:8px; width:90%; max-width:500px;">
+      <h2>Modifier le contact</h2>
+      <form id="form-edition">
+        <input type="hidden" id="edit-id">
+        <input class="form-control" id="edit-prenom" placeholder="Prénom"><br>
+        <input class="form-control" id="edit-nom" placeholder="Nom"><br>
+        <input class="form-control" id="edit-email_etu" placeholder="Email étudiant"><br>
+        <input class="form-control" id="edit-email_perso" placeholder="Email personnel"><br>
+        <input class="form-control" id="edit-tel" placeholder="Téléphone"><br>
+        <input class="form-control" id="edit-date_naissance" placeholder="Date de naissance"><br>
+        <input class="form-control" id="edit-discord_id" placeholder="Nom Discord"><br>
+        <input class="form-control" id="edit-groupe" placeholder="Groupe"><br>
+        <input class="form-control" id="edit-sous_groupe" placeholder="Sous-groupe"><br>
+        <div style="display:flex; justify-content:end; gap:1rem; margin-top:1rem;">
+          <button type="button" onclick="fermerModale()">Annuler</button>
+          <button type="submit">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+
   <script>
     const API_URL = "https://carnet-api.onrender.com/api/contacts";
 
@@ -244,7 +267,7 @@
           <strong>${contact.prenom} ${contact.nom}</strong><br>
           Email étudiant : <a href=mailto:"${contact.email_etu}">${contact.email_etu}</a><br>
           Email perso : <a href=mailto:"${contact.email_perso}">${contact.email_perso}</a><br>
-          Téléphone : <a href="tel:${contact.tel}">${contact.tel}</a> / Discord : ${contact.discord_id}<br>
+          Téléphone : <a href="tel: +33 ${contact.tel}">${contact.tel}</a> / Discord : ${contact.discord_id}<br>
           Groupe : ${contact.groupe} / ${contact.sous_groupe || '-'}
         `;
 
@@ -275,42 +298,63 @@
       const contact = tousLesContacts.find(c => c.id === id);
       if (!contact) return alert("Contact introuvable");
 
-      const nouveauPrenom = prompt("Prénom :", contact.prenom);
-      const nouveauNom = prompt("Nom :", contact.nom);
-      const nouveauEmail = prompt("Email étudiant :", contact.email_etu);
+      // Pré-remplir les champs du formulaire
+      document.getElementById("edit-id").value = id;
+      document.getElementById("edit-prenom").value = contact.prenom;
+      document.getElementById("edit-nom").value = contact.nom;
+      document.getElementById("edit-email_etu").value = contact.email_etu;
+      document.getElementById("edit-email_perso").value = contact.email_perso;
+      document.getElementById("edit-tel").value = contact.tel;
+      document.getElementById("edit-date_naissance").value = contact.date_naissance;
+      document.getElementById("edit-discord_id").value = contact.discord_id;
+      document.getElementById("edit-groupe").value = contact.groupe;
+      document.getElementById("edit-sous_groupe").value = contact.sous_groupe;
 
-      if (!nouveauPrenom || !nouveauNom || !nouveauEmail) {
-        alert("✋ Modification annulée.");
-        return;
-      }
+      document.getElementById("modale-edition").style.display = "flex";
+    }
+
+    function fermerModale() {
+      document.getElementById("modale-edition").style.display = "none";
+    }
+
+    document.getElementById("form-edition").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const id = document.getElementById("edit-id").value;
 
       const donneesModifiees = {
-        prenom: nouveauPrenom,
-        nom: nouveauNom,
-        email_etu: nouveauEmail,
-        email_perso: contact.email_perso,
-        tel: contact.tel,
-        discord_id: contact.discord_id,
-        date_naissance: contact.date_naissance,
-        groupe: contact.groupe,
-        sous_groupe: contact.sous_groupe
+        prenom: document.getElementById("edit-prenom").value,
+        nom: document.getElementById("edit-nom").value,
+        email_etu: document.getElementById("edit-email_etu").value,
+        email_perso: document.getElementById("edit-email_perso").value,
+        tel: document.getElementById("edit-tel").value,
+        date_naissance: document.getElementById("edit-date_naissance").value,
+        discord_id: document.getElementById("edit-discord_id").value,
+        groupe: document.getElementById("edit-groupe").value,
+        sous_groupe: document.getElementById("edit-sous_groupe").value
       };
 
-      fetch(`${API_URL}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(donneesModifiees)
-      })
-        .then(res => {
-          if (res.ok) {
-            alert("✅ Contact modifié !");
-            chargerContacts();
-          } else {
-            res.text().then(txt => alert("❌ Erreur : " + txt));
-          }
-        })
-        .catch(err => alert("❌ Erreur réseau : " + err.message));
-    }
+      try {
+        const res = await fetch(`${API_URL}/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(donneesModifiees)
+        });
+
+        if (res.ok) {
+          alert("✅ Contact modifié !");
+          fermerModale();
+          chargerContacts();
+        } else {
+          const txt = await res.text();
+          alert("❌ Erreur : " + txt);
+        }
+      } catch (err) {
+        alert("❌ Erreur réseau : " + err.message);
+      }
+    });
+
+
 
     // Charger les contacts au démarrage
     window.onload = chargerContacts;
