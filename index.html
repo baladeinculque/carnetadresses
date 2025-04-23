@@ -241,9 +241,9 @@
             <button onclick="supprimerContact(${contact.id})">🗑️</button>
           </div>
           <strong>${contact.prenom} ${contact.nom}</strong><br>
-          Email étudiant : ${contact.email_etu || "-" }<br>
-          Email perso : ${contact.email_perso}<br>
-          Téléphone : ${contact.tel} / Discord : ${contact.discord_id}<br>
+          Email étudiant : <a href=mailto:"${contact.email_etu}">${contact.email_etu}<\a><br>
+          Email perso : <a href=mailto:"${contact.email_perso}">${contact.email_perso}<\a><br>
+          Téléphone : <a href="tel:${contact.tel}">${contact.tel}<\a> / Discord : ${contact.discord_id}<br>
           Groupe : ${contact.groupe} / ${contact.sous_groupe || '-'}
         `;
 

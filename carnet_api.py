@@ -87,7 +87,7 @@ def add_contact():
 
 # 3. Mettre à jour un contact
 @app.route('/api/contacts/<int:id>', methods=['PUT'])
-def update_contact(id):
+def modifierContact(id):
     contact = Contact.query.get_or_404(id)
     data = request.json
     contact.nom = data.get('nom', contact.nom)
