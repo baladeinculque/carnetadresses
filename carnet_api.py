@@ -2,16 +2,20 @@ from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_migrate import Migrate
-import os
+from sqlalchemy.exc import IntegrityError
+sgwqs
 
+import os
+ 
 app = Flask(__name__)
-migrate = Migrate(app, db)
 CORS(app)  # Active CORS pour toutes les routes
 
 # Configuration de la base de données
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://carnetadresses_db_user:nsaHfy3PAXIYdKhQ2Nq9bssP3u0rTUwK@dpg-cvvsnn24d50c739n4b50-a/carnetadresses_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # Modèle de données pour les contacts
 class Contact(db.Model):
@@ -29,6 +33,20 @@ class Contact(db.Model):
     def __repr__(self):
         return f'<Contact {self.nom}>'
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'prenom': self.prenom,
+            'nom': self.nom,
+            'email_etu': self.email_etu,
+            'email_perso': self.email_perso,
+            'tel': self.tel,
+            'discord_id': self.discord_id,
+            'date_naissance': self.date_naissance,
+            'groupe': self.groupe,
+            'sous_groupe': self.sous_groupe
+        }
+
 # Créer la base de données au démarrage (si elle n'existe pas)
 with app.app_context():
     db.create_all()
@@ -39,14 +57,7 @@ with app.app_context():
 @app.route('/api/contacts', methods=['GET'])
 def get_contacts():
     contacts = Contact.query.order_by(Contact.nom).all()
-    return jsonify([{
-        'id': c.id,
-        'prenom': c.prenom,
-        'nom': c.nom,
-        'email': c.email,
-        'groupe': c.groupe,
-        'sous_groupe': c.sous_groupe  # ✅ Ajouté
-    } for c in contacts])
+    return jsonify([c.to_dict() for c in contacts])
 
 # 2. Ajouter un contact
 @app.route('/api/contacts', methods=['POST'])
@@ -55,13 +66,21 @@ def add_contact():
     contact = Contact(
         prenom=data['prenom'],
         nom=data['nom'],
-        email=data['email'],
+        email_etu=data['email_etu'],
+        email_perso=data['email_perso'],
+        tel=data.get('tel'),
+        discord_id=data.get('discord_id'),
+        date_naissance=data.get('date_naissance'),
         groupe=data.get('groupe', ''),
-        sous_groupe=data.get('sous_groupe', '')  # ✅ Ajouté
+        sous_groupe=data.get('sous_groupe', '')
     )
-    db.session.add(contact)
-    db.session.commit()
-    return jsonify({'message': 'Contact ajouté avec succès'}), 201
+    try:
+        db.session.add(contact)
+        db.session.commit()
+        return jsonify({'message': 'Contact ajouté avec succès'}), 201
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'error': 'Doublon détecté (email, téléphone ou Discord ID)'}), 400
 
 # 3. Mettre à jour un contact
 @app.route('/api/contacts/<int:id>', methods=['PUT'])
@@ -70,11 +89,19 @@ def update_contact(id):
     data = request.json
     contact.nom = data.get('nom', contact.nom)
     contact.prenom = data.get('prenom', contact.prenom)
-    contact.email = data.get('email', contact.email)
+    contact.email_etu = data.get('email_etu', contact.email_etu)
+    contact.email_perso = data.get('email_perso', contact.email_perso)
+    contact.tel = data.get('tel', contact.tel)
+    contact.discord_id = data.get('discord_id', contact.discord_id)
+    contact.date_naissance = data.get('date_naissance', contact.date_naissance)
     contact.groupe = data.get('groupe', contact.groupe)
-    contact.sous_groupe = data.get('sous_groupe', contact.sous_groupe)  # ✅ Ajouté
-    db.session.commit()
-    return jsonify({'message': 'Contact mis à jour'})
+    contact.sous_groupe = data.get('sous_groupe', contact.sous_groupe)
+    try:
+        db.session.commit()
+        return jsonify({'message': 'Contact mis à jour'})
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({'error': 'Conflit de doublon lors de la mise à jour'}), 400
 
 # 4. Supprimer un contact
 @app.route('/api/contacts/<int:id>', methods=['DELETE'])
