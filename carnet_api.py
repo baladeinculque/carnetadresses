@@ -10,7 +10,7 @@ app = Flask(__name__)
 CORS(app)  # Active CORS pour toutes les routes
 
 # Configuration de la base de données
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://carnetadresses_db_user:nsaHfy3PAXIYdKhQ2Nq9bssP3u0rTUwK@dpg-cvvsnn24d50c739n4b50-a/carnetadresses_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://carnetadresses_db_user:nIwJCMNHo2uzGUNfhqxGIJWlB0g0v53o@dpg-d0lk8l2dbo4c73aof3og-a/carnetadresses_db_h65y'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
